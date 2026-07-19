@@ -1,29 +1,34 @@
 # Steam → GOG Checker (Firefox)
 
-Variante Firefox de l'extension. Voir [`../steam-gog-checker/README.md`](../steam-gog-checker/README.md) pour la description, l'audit de sécurité et la roadmap.
+Firefox variant of the extension. See [`../chromium/README.md`](../chromium/README.md) for the full description, security audit, and roadmap — the functional code is identical.
 
-## Différences avec la version Chromium
+## Differences vs. the Chromium variant
 
-| | Chromium / Edge | Firefox |
+|  | Chromium / Edge | Firefox |
 |---|---|---|
 | Background | `service_worker` | `scripts` (event page) |
 | Manifest extras | — | `browser_specific_settings.gecko.id` |
-| Version min navigateur | Chrome 88+ | Firefox 113+ |
+| Minimum browser version | Chrome 88+ | Firefox 113+ |
 
-## Installation temporaire (test)
+Why `scripts` instead of `service_worker`? Firefox has supported `service_worker` since 121, but the event page (`scripts`) has been the reliable MV3 background pattern since Firefox 109 and behaves consistently across versions.
 
-1. Ouvre Firefox → `about:debugging#/runtime/this-firefox`
-2. Clique **Charger un module complémentaire temporaire**
-3. Sélectionne `manifest.json` de ce dossier
-4. Disparait au redémarrage de Firefox
+## Temporary install (dev)
 
-## Installation permanente
+1. Open Firefox -> `about:debugging#/runtime/this-firefox`
+2. Click **Load Temporary Add-on**
+3. Select `manifest.json` in this folder
+4. The extension is loaded until the next Firefox restart
+
+## Permanent install
 
 **A. Firefox Developer Edition / Nightly**
-- `about:config` → `xpinstall.signatures.required = false`
-- Zippe le dossier en `.xpi` et drag & drop dans Firefox
 
-**B. Signature Mozilla auto (unlisted)**
-- Compte sur https://addons.mozilla.org/developers/
-- Soumets le `.xpi` en mode **unlisted** (distribution hors store)
-- Récupère le `.xpi` signé, installable dans n'importe quel Firefox stable
+- `about:config` -> set `xpinstall.signatures.required` to `false`
+- Zip this folder as `.xpi` and drag & drop into Firefox
+
+**B. Self-sign via Mozilla (free, unlisted)**
+
+- Register at https://addons.mozilla.org/developers/
+- Submit the `.xpi` as **unlisted** (distributed outside the AMO store)
+- Mozilla auto-signs (usually within minutes)
+- Download the signed `.xpi` and install in any standard Firefox

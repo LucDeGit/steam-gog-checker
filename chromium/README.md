@@ -1,115 +1,90 @@
-# Steam → GOG Checker
+# Steam → GOG Checker (Chromium / Edge / Brave)
 
-Extension navigateur (Chromium / Edge / Firefox, Manifest V3) qui affiche un bandeau au-dessus de la zone d'achat sur une page Steam si le jeu est aussi disponible sur GOG.com. Le bandeau montre le prix GOG (avec promo si applicable) et redirige vers la fiche produit d'un simple clic.
+Chromium variant of the extension. Uses Manifest V3 with a `service_worker` background.
 
-![screenshot placeholder](docs/screenshot.png)
+## How it works
 
-## Fonctionnement
+1. A content script runs on `store.steampowered.com/app/*`
+2. It extracts the game name from the Steam DOM (`#appHubAppName`)
+3. It asks the service worker to search `catalog.gog.com` for that name
+4. A 3-tier matching algorithm (exact -> prefix -> Jaccard similarity >= 0.7) selects the best candidate
+5. If a match is found, a banner is injected above the Steam purchase area
 
-1. Un content script s'exécute sur `store.steampowered.com/app/*`
-2. Il extrait le nom du jeu depuis le DOM Steam (`#appHubAppName`)
-3. Il demande à un service worker de chercher ce jeu sur `catalog.gog.com`
-4. Le service worker fait la requête et renvoie les résultats
-5. Un algorithme de matching à 3 niveaux (exact → préfixe → similarité Jaccard ≥ 0.7) sélectionne le meilleur candidat
-6. Si un match est trouvé, un bandeau est injecté avant la zone d'achat Steam
+## Install
 
-## Installation
+1. Clone or download this folder
+2. Open `edge://extensions/` (or `chrome://extensions/`, `brave://extensions/`)
+3. Enable **Developer mode**
+4. Click **Load unpacked** and select the `chromium/` folder
+5. Visit any Steam game page
 
-### Chromium / Edge / Brave (mode développeur)
+## Security
 
-1. Clone ou télécharge ce repo
-2. Va sur `edge://extensions/` (ou `chrome://extensions/`)
-3. Active le **Mode développeur**
-4. **Charger l'extension décompressée** → sélectionne le dossier `steam-gog-checker/`
-5. Visite une page Steam de jeu
+Built with least-privilege principles.
 
-### Firefox
+### Permissions requested
 
-Voir [`../steam-gog-checker-firefox/README.md`](../steam-gog-checker-firefox/README.md).
+| Permission | Why |
+|------------|-----|
+| `declarativeNetRequestWithHostAccess` | Rewrite the CORS response header from `catalog.gog.com` (which restricts origin to `https://www.gog.com`). Required so the service worker can read the response. |
+| `host_permissions: store.steampowered.com/*` | Inject the content script on Steam pages. |
+| `host_permissions: catalog.gog.com/*` | Allow the service worker to query the GOG API. |
 
-## Sécurité
+No `tabs`, `storage`, `cookies`, `webRequest`, `activeTab`, or similar broad permissions.
 
-L'extension a été conçue avec le principe du moindre privilège. Détails :
+### Scoped `declarativeNetRequest` rule
 
-### Permissions demandées
+`rules.json` rewrites response headers only for `catalog.gog.com` and only for requests initiated by the extension's service worker (`tabIds: [-1]`). No third-party page requests are affected.
 
-| Permission | Justification |
-|------------|---------------|
-| `declarativeNetRequestWithHostAccess` | Réécrire l'en-tête CORS de la réponse de `catalog.gog.com` (qui bloque explicitement les origines autres que `https://www.gog.com`). Requis sinon le service worker ne peut pas lire la réponse. |
-| `host_permissions: store.steampowered.com/*` | Injecter le content script sur les pages Steam. |
-| `host_permissions: catalog.gog.com/*` | Autoriser le service worker à requêter l'API GOG. |
+### No `innerHTML` with external data
 
-Pas de permission `tabs`, `storage`, `cookies`, `webRequest`, `activeTab`, etc.
+All data coming from the GOG API (titles, prices, currencies, URLs) is inserted into the DOM via `document.createElement` and `Element.textContent`. No XSS surface even if the API returned malicious HTML.
 
-### Règle `declarativeNetRequest` restreinte
+### URL validation
 
-Le fichier `rules.json` réécrit uniquement les réponses de `catalog.gog.com` **et seulement pour les requêtes initiées par le service worker de l'extension** (`tabIds: [-1]`). Aucune requête faite par une page tierce n'est affectée.
+The banner's destination URL (`href`) is validated before use:
+- Must parse as an absolute URL
+- Protocol must be `https:`
+- Hostname must be `www.gog.com` or `gog.com`
 
-### Aucun `innerHTML` avec données externes
+Any rejected URL -> no banner is injected.
 
-Toutes les données provenant de l'API GOG (titres, prix, devises, URLs) sont insérées dans le DOM via `document.createElement` et `Element.textContent`. Aucun risque d'XSS même si l'API renvoyait du HTML malveillant.
+### Outgoing requests
 
-### Validation d'URL
+- Single destination: `https://catalog.gog.com/v1/catalog?query=...`
+- `credentials: 'omit'` (no cookies sent)
+- No personal data transmitted, only the game name shown on the Steam page is sent to GOG
+- No telemetry, no tracking, no third-party servers
 
-L'URL de destination du bandeau (`href`) est validée avant utilisation :
-- Doit parser comme URL absolue
-- Protocole obligatoirement `https:`
-- Hostname obligatoirement `www.gog.com` ou `gog.com`
+### Currency / injections
 
-Toute URL rejetée → pas de bandeau injecté.
-
-### Requêtes sortantes
-
-- Une seule destination : `https://catalog.gog.com/v1/catalog?query=...`
-- `credentials: 'omit'` (aucun cookie envoyé)
-- Aucune donnée personnelle transmise, seul le nom du jeu affiché sur la page Steam est envoyé à GOG
-- Pas de télémétrie, pas de tracking, aucun serveur tiers
-
-### Devise / injections
-
-La devise renvoyée par GOG est filtrée par whitelist (`EUR` → `€`, `USD` → `$`, `GBP` → `£`, sinon rien). Le pourcentage de remise est parsé en `parseFloat` avant affichage.
+The currency returned by GOG is filtered via strict whitelist (`EUR` -> `€`, `USD` -> `$`, `GBP` -> `£`; anything else is dropped). The discount percentage is parsed with `parseFloat` before display.
 
 ## Configuration
 
-Deux paramètres sont codés en dur mais faciles à modifier :
+Two parameters are hardcoded but easy to change:
 
-- **Pays / devise** : dans `background.js`, `countryCode=BE&currencyCode=EUR`. Change en `FR/EUR`, `US/USD`, etc. selon ton pays.
-- **Seuil de matching** : dans `content.js`, `const THRESHOLD = 0.7`. Baisse-le pour être plus permissif, monte-le pour être plus strict.
+- **Country / currency** in `background.js`: `countryCode=BE&currencyCode=EUR`. Change to `FR/EUR`, `US/USD`, etc. to match your region.
+- **Matching threshold** in `content.js`: `if (scored[0].score >= 0.7)`. Lower for more permissive matches, higher for stricter.
 
 ## Debug
 
-Ouvre la console (F12) sur une page Steam. Tous les logs sont préfixés `[Steam→GOG]`. Les logs du service worker sont rapatriés dans la même console via `[Steam→GOG] [SW]`.
+Open the console (F12) on a Steam game page. All logs are prefixed with `[Steam->GOG]`. Service worker logs are relayed to the same console under `[Steam->GOG] [SW]`.
 
-Exemple attendu sur un match :
+Example output for a successful match:
 
 ```
-[Steam→GOG] nom du jeu Steam : "Hades"
-[Steam→GOG] stratégies : ["Hades"]
-[Steam→GOG] [SW] query = "Hades"
-[Steam→GOG] [SW] HTTP 200
-[Steam→GOG] [SW] 5 produits
-[Steam→GOG] match exact : Hades
-[Steam→GOG] badge inséré dans #game_area_purchase
+[Steam->GOG] steam game name: "Hades"
+[Steam->GOG] strategies: ["Hades"]
+[Steam->GOG] [SW] query = "Hades"
+[Steam->GOG] [SW] HTTP 200
+[Steam->GOG] [SW] 5 products
+[Steam->GOG] exact match: Hades
+[Steam->GOG] banner injected in #game_area_purchase
 ```
 
-## Limites connues
+## Known limitations
 
-- **Faux négatifs** possibles quand le titre Steam et le titre GOG divergent trop (éditions particulières, sous-titres différents). Le seuil Jaccard à 0.7 privilégie la précision.
-- **Pas de cache** : chaque chargement de page Steam = une requête à catalog.gog.com. Roadmap ↓.
-- L'API `catalog.gog.com` n'est pas documentée officiellement par GOG, elle peut changer sans préavis.
-
-## Roadmap
-
-- [ ] Cache local (`chrome.storage.local`) avec TTL 24 h
-- [ ] Support Itch.io en parallèle
-- [ ] Comparaison de prix bidirectionnelle (badge Steam sur pages GOG)
-- [ ] Popup UI pour configurer le pays/devise
-- [ ] Signaler dans le bandeau si le prix GOG est plus bas que celui affiché sur Steam
-
-## Licence
-
-MIT. Voir [`LICENSE`](./LICENSE).
-
-## Disclaimer
-
-Projet perso non affilié à Valve/Steam ni à GOG.com / CD PROJEKT. Les marques et logos "Steam" et "GOG" appartiennent à leurs propriétaires respectifs.
+- **False negatives** are possible when the Steam and GOG titles diverge too much (odd editions, different subtitles). The 0.7 Jaccard threshold favors precision over recall.
+- **No cache** — every Steam page load triggers one request to catalog.gog.com. See roadmap.
+- The `catalog.gog.com` API is not officially documented; it may change without notice.

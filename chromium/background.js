@@ -1,5 +1,5 @@
-// Service worker : tourne dans le contexte de l'extension.
-// La règle declarativeNetRequest réécrit les headers CORS pour permettre la lecture.
+// Service worker: runs in the extension context.
+// The declarativeNetRequest rule rewrites CORS headers so we can read the response.
 
 const ENDPOINT = {
   name: 'catalog',
@@ -34,7 +34,7 @@ async function search(query, logs) {
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   const data = await res.json();
   const products = ENDPOINT.parse(data);
-  logs.push(`${products.length} produits`);
+  logs.push(`${products.length} products`);
   return products;
 }
 
@@ -47,7 +47,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
       const products = await search(msg.query, logs);
       sendResponse({ ok: true, products, logs });
     } catch (e) {
-      logs.push(`erreur : ${e?.message || e}`);
+      logs.push(`error: ${e?.message || e}`);
       sendResponse({ ok: false, error: String(e?.message || e), logs });
     }
   })();

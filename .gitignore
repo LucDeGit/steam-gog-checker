@@ -11,6 +11,6 @@ build/
 .DS_Store
 Thumbs.db
 
-# Node (si tu ajoutes des outils de build plus tard)
+# Node (in case build tooling is added later)
 node_modules/
 package-lock.json

@@ -1,21 +1,21 @@
 (async function () {
   'use strict';
 
-  const TAG = '[Steam→GOG]';
-  console.log(`${TAG} content script chargé sur`, location.href);
+  const TAG = '[Steam->GOG]';
+  console.log(`${TAG} content script loaded on`, location.href);
 
-  // --- 1. Récupération du nom du jeu ---
+  // --- 1. Read the game name from the Steam page ---
   const nameEl =
     document.querySelector('#appHubAppName') || document.querySelector('.apphub_AppName');
   if (!nameEl) {
-    console.warn(`${TAG} élément du nom du jeu introuvable`);
+    console.warn(`${TAG} game name element not found`);
     return;
   }
   const steamName = nameEl.textContent.trim();
   if (!steamName) return;
-  console.log(`${TAG} nom du jeu Steam : "${steamName}"`);
+  console.log(`${TAG} steam game name: "${steamName}"`);
 
-  // --- 2. Normalisation + similarité Jaccard ---
+  // --- 2. Normalization + Jaccard similarity ---
   function normalize(str) {
     return str
       .toLowerCase()
@@ -45,7 +45,7 @@
     return inter / (A.size + B.size - inter);
   }
 
-  // --- 3. Recherche ---
+  // --- 3. Search ---
   function buildSearchQueries(name) {
     const cleaned = name
       .replace(/[®™©]/g, '')
@@ -76,7 +76,7 @@
 
   async function searchOnce(query) {
     const response = await chrome.runtime.sendMessage({ type: 'gog_search', query });
-    if (!response) throw new Error('pas de réponse du service worker');
+    if (!response) throw new Error('no response from service worker');
     if (Array.isArray(response.logs)) for (const l of response.logs) console.log(`${TAG} [SW]`, l);
     if (!response.ok) throw new Error(`SW: ${response.error}`);
     return response.products || [];
@@ -84,7 +84,7 @@
 
   async function searchGog(name) {
     const queries = buildSearchQueries(name);
-    console.log(`${TAG} stratégies :`, queries);
+    console.log(`${TAG} strategies:`, queries);
     for (const q of queries) {
       const products = await searchOnce(q);
       if (products.length > 0) return products;
@@ -99,7 +99,7 @@
 
     for (const p of products) {
       if (normalize(p.title) === target) {
-        console.log(`${TAG} match exact : ${p.title}`);
+        console.log(`${TAG} exact match: ${p.title}`);
         return p;
       }
     }
@@ -107,7 +107,7 @@
       const n = normalize(p.title);
       if (!n) continue;
       if ((n.startsWith(target + ' ') || target.startsWith(n + ' ')) && Math.abs(n.length - target.length) <= 15) {
-        console.log(`${TAG} match préfixe : ${p.title}`);
+        console.log(`${TAG} prefix match: ${p.title}`);
         return p;
       }
     }
@@ -115,17 +115,17 @@
       .map((p) => ({ p, score: jaccard(target, normalize(p.title)) }))
       .sort((a, b) => b.score - a.score);
     console.log(
-      `${TAG} top Jaccard :`,
+      `${TAG} top Jaccard:`,
       scored.slice(0, 5).map((s) => `${s.p.title.trim()} (${s.score.toFixed(2)})`)
     );
     if (scored[0] && scored[0].score >= 0.7) {
-      console.log(`${TAG} match Jaccard : ${scored[0].p.title}`);
+      console.log(`${TAG} Jaccard match: ${scored[0].p.title}`);
       return scored[0].p;
     }
     return null;
   }
 
-  // --- 4. Badge (aucun innerHTML, URL validée) ---
+  // --- 4. Banner (no innerHTML, URL validated) ---
   function safeStoreUrl(product) {
     let raw = product.url;
     if (!raw && product.slug) {
@@ -153,7 +153,7 @@
     if (!price) return null;
     if (price.isFree) return { free: true };
     if (!price.final) return null;
-    // Currency filtrée en whitelist stricte
+    // Currency filtered via strict whitelist
     const raw = String(price.currency || '');
     const cur = raw === 'EUR' ? '€' : raw === 'USD' ? '$' : raw === 'GBP' ? '£' : '';
     const out = { final: `${price.final}${cur}` };
@@ -167,10 +167,10 @@
     return out;
   }
 
-  function buildBadge(product) {
+  function buildBanner(product) {
     const storeUrl = safeStoreUrl(product);
     if (!storeUrl) {
-      console.warn(`${TAG} URL GOG rejetée : ${product.url}`);
+      console.warn(`${TAG} GOG URL rejected: ${product.url}`);
       return null;
     }
 
@@ -178,7 +178,7 @@
     a.href = storeUrl;
     a.target = '_blank';
     a.rel = 'noopener noreferrer';
-    a.title = `Aussi disponible sur GOG : ${product.title.trim()}`;
+    a.title = `Also available on GOG: ${product.title.trim()}`;
 
     const left = el('div', 'sgc-left');
     const logo = el('div', 'sgc-logo');
@@ -186,7 +186,7 @@
     left.appendChild(logo);
 
     const textCol = el('div', 'sgc-text');
-    textCol.appendChild(el('div', 'sgc-title', 'Aussi disponible sur GOG.COM'));
+    textCol.appendChild(el('div', 'sgc-title', 'Also available on GOG.COM'));
     textCol.appendChild(el('div', 'sgc-subtitle', `DRM-free · ${product.title.trim()}`));
     left.appendChild(textCol);
     a.appendChild(left);
@@ -195,7 +195,7 @@
     const price = formatPrice(product.price);
     if (price) {
       if (price.free) {
-        right.appendChild(el('div', 'sgc-price-final', 'Gratuit'));
+        right.appendChild(el('div', 'sgc-price-final', 'Free'));
       } else if (price.discount) {
         const block = el('div', 'sgc-price-block');
         block.appendChild(el('div', 'sgc-price-discount', price.discount));
@@ -208,29 +208,29 @@
         right.appendChild(el('div', 'sgc-price-final', price.final));
       }
     }
-    right.appendChild(el('div', 'sgc-cta', 'Voir sur GOG →'));
+    right.appendChild(el('div', 'sgc-cta', 'View on GOG →'));
     a.appendChild(right);
 
     return a;
   }
 
-  function injectBadge(badge) {
+  function injectBanner(banner) {
     const purchaseArea = document.querySelector('#game_area_purchase');
     if (purchaseArea) {
-      purchaseArea.insertBefore(badge, purchaseArea.firstChild);
-      console.log(`${TAG} badge inséré dans #game_area_purchase`);
+      purchaseArea.insertBefore(banner, purchaseArea.firstChild);
+      console.log(`${TAG} banner injected in #game_area_purchase`);
       return;
     }
     const fallbacks = ['.apphub_HeaderStandardTop', '.glance_ctn', '#appHubAppName'];
     for (const sel of fallbacks) {
       const t = document.querySelector(sel);
       if (t) {
-        t.appendChild(badge);
-        console.log(`${TAG} fallback : ${sel}`);
+        t.appendChild(banner);
+        console.log(`${TAG} fallback target: ${sel}`);
         return;
       }
     }
-    console.warn(`${TAG} aucune cible d'injection`);
+    console.warn(`${TAG} no injection target found`);
   }
 
   // --- 5. Orchestration ---
@@ -238,12 +238,12 @@
     const products = await searchGog(steamName);
     const match = findBestMatch(steamName, products);
     if (match) {
-      const badge = buildBadge(match);
-      if (badge) injectBadge(badge);
+      const banner = buildBanner(match);
+      if (banner) injectBanner(banner);
     } else {
-      console.log(`${TAG} pas de match GOG pour "${steamName}"`);
+      console.log(`${TAG} no GOG match for "${steamName}"`);
     }
   } catch (e) {
-    console.error(`${TAG} erreur :`, e);
+    console.error(`${TAG} error:`, e);
   }
 })();

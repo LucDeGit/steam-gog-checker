@@ -31,7 +31,6 @@ jobs:
         run: |
           cd firefox
           zip -r ../steam-gog-checker-firefox-v${{ steps.version.outputs.version }}.zip . -x "*.DS_Store"
-          # Firefox .xpi is just a renamed zip
           cp ../steam-gog-checker-firefox-v${{ steps.version.outputs.version }}.zip \
              ../steam-gog-checker-firefox-v${{ steps.version.outputs.version }}.xpi
 
@@ -54,12 +53,22 @@ jobs:
             steam-gog-checker-firefox-v${{ steps.version.outputs.version }}.zip
             steam-gog-checker-firefox-v${{ steps.version.outputs.version }}.xpi
           body: |
-            ## Installation
+            ## Install
 
-            **Chrome / Edge / Brave** : télécharge `steam-gog-checker-chromium-v${{ steps.version.outputs.version }}.zip`, dézippe, va sur `chrome://extensions/` (ou `edge://extensions/`), active le mode développeur, "Charger l'extension décompressée", sélectionne le dossier.
+            **Chrome / Edge / Brave / Opera / Vivaldi**: download `steam-gog-checker-chromium-v${{ steps.version.outputs.version }}.zip`, unzip somewhere permanent, open `chrome://extensions/`, enable Developer mode, click "Load unpacked", and select the folder.
 
-            **Firefox (temporaire)** : télécharge le `.zip`, dézippe, va sur `about:debugging#/runtime/this-firefox`, "Charger un module complémentaire temporaire", sélectionne `manifest.json`.
+            **Firefox (temporary)**: download the `.zip`, unzip, open `about:debugging#/runtime/this-firefox`, click "Load Temporary Add-on", and select `manifest.json`.
 
-            **Firefox (permanent)** : le `.xpi` fourni est le zip renommé — il faut le signer via Mozilla (compte dev, mode unlisted) ou l'installer sur Firefox Developer Edition avec `xpinstall.signatures.required = false`.
+            **Firefox (permanent)**: the `.xpi` is the same content, renamed. Sign it via Mozilla (free unlisted mode) or install in Firefox Developer Edition with `xpinstall.signatures.required = false`.
 
-            Voir le [README](https://github.com/${{ github.repository }}/blob/main/README.md) pour les détails et l'audit de sécurité.
+            → **Detailed step-by-step guide: [INSTALL.md](https://github.com/${{ github.repository }}/blob/main/INSTALL.md)**
+
+            See the [README](https://github.com/${{ github.repository }}/blob/main/README.md) for the security audit and technical details.
+
+            **Chrome / Edge / Brave**: download `steam-gog-checker-chromium-v${{ steps.version.outputs.version }}.zip`, unzip, open `chrome://extensions/` (or `edge://extensions/`), enable Developer mode, click "Load unpacked", and select the folder.
+
+            **Firefox (temporary)**: download the `.zip`, unzip, open `about:debugging#/runtime/this-firefox`, click "Load Temporary Add-on", and select `manifest.json`.
+
+            **Firefox (permanent)**: the `.xpi` file is the same content, renamed. Sign it via Mozilla (developer account, unlisted mode) or install it in Firefox Developer Edition with `xpinstall.signatures.required = false`.
+
+            See the [README](https://github.com/${{ github.repository }}/blob/main/README.md) for details and the security audit.
