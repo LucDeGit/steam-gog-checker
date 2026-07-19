@@ -1,0 +1,41 @@
+{
+  "manifest_version": 3,
+  "name": "Steam → GOG Checker",
+  "version": "1.7.0",
+  "description": "Affiche un badge sur les pages Steam quand le jeu est aussi disponible sur GOG.",
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "steam-gog-checker@culnetwork.net",
+      "strict_min_version": "113.0"
+    }
+  },
+  "permissions": ["declarativeNetRequestWithHostAccess"],
+  "host_permissions": [
+    "https://store.steampowered.com/*",
+    "https://catalog.gog.com/*"
+  ],
+  "declarative_net_request": {
+    "rule_resources": [
+      {
+        "id": "ruleset_1",
+        "enabled": true,
+        "path": "rules.json"
+      }
+    ]
+  },
+  "background": {
+    "scripts": ["background.js"]
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://store.steampowered.com/app/*"],
+      "js": ["content.js"],
+      "css": ["styles.css"],
+      "run_at": "document_idle"
+    }
+  ],
+  "icons": {
+    "48": "icon48.png",
+    "128": "icon128.png"
+  }
+}

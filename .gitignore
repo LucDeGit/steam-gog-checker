@@ -1,0 +1,16 @@
+# Builds
+*.zip
+*.xpi
+dist/
+build/
+
+# Editors
+.vscode/
+.idea/
+*.swp
+.DS_Store
+Thumbs.db
+
+# Node (si tu ajoutes des outils de build plus tard)
+node_modules/
+package-lock.json

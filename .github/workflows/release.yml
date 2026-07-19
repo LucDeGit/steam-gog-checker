@@ -1,0 +1,65 @@
+name: Build & Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Read version from manifest
+        id: version
+        run: |
+          VERSION=$(grep -oP '"version":\s*"\K[^"]+' chromium/manifest.json)
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Version: $VERSION"
+
+      - name: Package Chromium
+        run: |
+          cd chromium
+          zip -r ../steam-gog-checker-chromium-v${{ steps.version.outputs.version }}.zip . -x "*.DS_Store"
+
+      - name: Package Firefox
+        run: |
+          cd firefox
+          zip -r ../steam-gog-checker-firefox-v${{ steps.version.outputs.version }}.zip . -x "*.DS_Store"
+          # Firefox .xpi is just a renamed zip
+          cp ../steam-gog-checker-firefox-v${{ steps.version.outputs.version }}.zip \
+             ../steam-gog-checker-firefox-v${{ steps.version.outputs.version }}.xpi
+
+      - name: Upload artifacts (workflow_dispatch)
+        if: github.event_name == 'workflow_dispatch'
+        uses: actions/upload-artifact@v4
+        with:
+          name: builds
+          path: |
+            steam-gog-checker-chromium-*.zip
+            steam-gog-checker-firefox-*.zip
+            steam-gog-checker-firefox-*.xpi
+
+      - name: Create Release (tag push)
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            steam-gog-checker-chromium-v${{ steps.version.outputs.version }}.zip
+            steam-gog-checker-firefox-v${{ steps.version.outputs.version }}.zip
+            steam-gog-checker-firefox-v${{ steps.version.outputs.version }}.xpi
+          body: |
+            ## Installation
+
+            **Chrome / Edge / Brave** : télécharge `steam-gog-checker-chromium-v${{ steps.version.outputs.version }}.zip`, dézippe, va sur `chrome://extensions/` (ou `edge://extensions/`), active le mode développeur, "Charger l'extension décompressée", sélectionne le dossier.
+
+            **Firefox (temporaire)** : télécharge le `.zip`, dézippe, va sur `about:debugging#/runtime/this-firefox`, "Charger un module complémentaire temporaire", sélectionne `manifest.json`.
+
+            **Firefox (permanent)** : le `.xpi` fourni est le zip renommé — il faut le signer via Mozilla (compte dev, mode unlisted) ou l'installer sur Firefox Developer Edition avec `xpinstall.signatures.required = false`.
+
+            Voir le [README](https://github.com/${{ github.repository }}/blob/main/README.md) pour les détails et l'audit de sécurité.

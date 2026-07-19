@@ -1,0 +1,149 @@
+/* Bandeau GOG injecté au-dessus de la zone d'achat Steam */
+
+.sgc-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 18px;
+  margin: 0 0 12px 0;
+  background: linear-gradient(135deg, #2a0a3d 0%, #5c0e76 60%, #6f2da8 100%);
+  border: 1px solid rgba(160, 92, 201, 0.35);
+  border-radius: 4px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  font-family: "Motiva Sans", "Arial", sans-serif;
+  color: #fff !important;
+  text-decoration: none !important;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.sgc-banner::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, #a05cc9, transparent);
+}
+
+.sgc-banner:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(111, 45, 168, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  filter: brightness(1.1);
+  text-decoration: none !important;
+}
+
+.sgc-left {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+  flex: 1;
+}
+
+.sgc-logo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 38px;
+  background: #fff;
+  border-radius: 3px;
+  flex-shrink: 0;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+.sgc-logo-text {
+  font-family: "Arial Black", "Helvetica", sans-serif;
+  font-weight: 900;
+  font-size: 18px;
+  color: #5c0e76;
+  letter-spacing: 1px;
+  line-height: 1;
+}
+
+.sgc-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.sgc-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+}
+
+.sgc-subtitle {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.75);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 420px;
+}
+
+.sgc-right {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-shrink: 0;
+}
+
+.sgc-price-block {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.sgc-price-discount {
+  background: #4c6b22;
+  color: #beee11;
+  font-weight: 700;
+  font-size: 14px;
+  padding: 4px 8px;
+  border-radius: 2px;
+  line-height: 1;
+}
+
+.sgc-price-amounts {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  line-height: 1.1;
+}
+
+.sgc-price-base {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.5);
+  text-decoration: line-through;
+}
+
+.sgc-price-final {
+  font-size: 15px;
+  font-weight: 700;
+  color: #fff;
+}
+
+.sgc-cta {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 8px 14px;
+  border-radius: 3px;
+  white-space: nowrap;
+  transition: background 0.15s ease;
+}
+
+.sgc-banner:hover .sgc-cta {
+  background: rgba(255, 255, 255, 0.2);
+}
