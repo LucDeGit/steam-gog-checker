@@ -180,42 +180,35 @@
       return null;
     }
 
+    const title = product.title.trim();
+    const price = formatPrice(product.price);
+    const free = Boolean(price && price.free);
+
     const a = el('a', 'sgc-banner');
     a.href = storeUrl;
     a.target = '_blank';
     a.rel = 'noopener noreferrer';
-    a.title = `Also available on GOG: ${product.title.trim()}`;
+    a.title = `Opens ${title} on gog.com in a new tab`;
 
-    const left = el('div', 'sgc-left');
-    const logo = el('div', 'sgc-logo');
-    logo.appendChild(el('span', 'sgc-logo-text', 'GOG'));
-    left.appendChild(logo);
+    a.appendChild(el('div', 'sgc-heading', `${free ? 'Get' : 'Buy'} ${title} on GOG`));
+    a.appendChild(el('div', 'sgc-note', 'DRM-free: the installer is yours to keep.'));
 
-    const textCol = el('div', 'sgc-text');
-    textCol.appendChild(el('div', 'sgc-title', 'Also available on GOG.COM'));
-    textCol.appendChild(el('div', 'sgc-subtitle', `DRM-free · ${product.title.trim()}`));
-    left.appendChild(textCol);
-    a.appendChild(left);
-
-    const right = el('div', 'sgc-right');
-    const price = formatPrice(product.price);
+    const action = el('div', 'sgc-action');
     if (price) {
-      if (price.free) {
-        right.appendChild(el('div', 'sgc-price-final', 'Free'));
+      if (free) {
+        action.appendChild(el('div', 'sgc-price', 'Free'));
       } else if (price.discount) {
-        const block = el('div', 'sgc-price-block');
-        block.appendChild(el('div', 'sgc-price-discount', price.discount));
-        const amounts = el('div', 'sgc-price-amounts');
-        amounts.appendChild(el('div', 'sgc-price-base', price.base));
-        amounts.appendChild(el('div', 'sgc-price-final', price.final));
-        block.appendChild(amounts);
-        right.appendChild(block);
+        action.appendChild(el('div', 'sgc-discount', price.discount));
+        const prices = el('div', 'sgc-prices');
+        prices.appendChild(el('div', 'sgc-price-base', price.base));
+        prices.appendChild(el('div', 'sgc-price-final', price.final));
+        action.appendChild(prices);
       } else {
-        right.appendChild(el('div', 'sgc-price-final', price.final));
+        action.appendChild(el('div', 'sgc-price', price.final));
       }
     }
-    right.appendChild(el('div', 'sgc-cta', 'View on GOG →'));
-    a.appendChild(right);
+    action.appendChild(el('span', 'sgc-button', 'View on GOG'));
+    a.appendChild(action);
 
     return a;
   }
