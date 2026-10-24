@@ -156,11 +156,17 @@
     // Currency filtered via strict whitelist
     const raw = String(price.currency || '');
     const cur = raw === 'EUR' ? '€' : raw === 'USD' ? '$' : raw === 'GBP' ? '£' : '';
-    const out = { final: `${price.final}${cur}` };
+    // GOG usually returns amounts already formatted (e.g. "€19.99"): only add the symbol to bare numbers
+    const withCur = (amount) => {
+      const s = String(amount).trim();
+      return /^[\d.,\s]+$/.test(s) ? `${s}${cur}` : s;
+    };
+    const out = { final: withCur(price.final) };
     if (price.base && price.discount) {
-      const d = parseFloat(price.discount);
+      // Discount may come as "-50%" or "50": compare on the absolute value
+      const d = Math.abs(parseFloat(price.discount));
       if (!isNaN(d) && d > 0) {
-        out.base = `${price.base}${cur}`;
+        out.base = withCur(price.base);
         out.discount = `-${d}%`;
       }
     }

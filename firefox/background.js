@@ -1,4 +1,4 @@
-// Service worker: runs in the extension context.
+// Background script (service worker on Chromium, event page on Firefox): runs in the extension context.
 // The declarativeNetRequest rule rewrites CORS headers so we can read the response.
 
 const ENDPOINT = {

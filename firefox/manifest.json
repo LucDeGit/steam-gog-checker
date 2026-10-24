@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "Steam → GOG Checker",
-  "version": "1.7.0",
-  "description": "Affiche un badge sur les pages Steam quand le jeu est aussi disponible sur GOG.",
+  "version": "1.7.1",
+  "description": "Shows a banner on Steam game pages when the game is also available on GOG.",
   "browser_specific_settings": {
     "gecko": {
       "id": "steam-gog-checker@culnetwork.net",

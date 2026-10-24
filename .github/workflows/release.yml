@@ -22,6 +22,14 @@ jobs:
           echo "version=$VERSION" >> $GITHUB_OUTPUT
           echo "Version: $VERSION"
 
+      - name: Check variants and tag/version consistency
+        run: |
+          scripts/check-sync.sh
+          if [[ "$GITHUB_REF" == refs/tags/v* && "$GITHUB_REF_NAME" != "v${{ steps.version.outputs.version }}" ]]; then
+            echo "::error::tag $GITHUB_REF_NAME does not match manifest version ${{ steps.version.outputs.version }}"
+            exit 1
+          fi
+
       - name: Package Chromium
         run: |
           cd chromium
@@ -64,11 +72,3 @@ jobs:
             → **Detailed step-by-step guide: [INSTALL.md](https://github.com/${{ github.repository }}/blob/main/INSTALL.md)**
 
             See the [README](https://github.com/${{ github.repository }}/blob/main/README.md) for the security audit and technical details.
-
-            **Chrome / Edge / Brave**: download `steam-gog-checker-chromium-v${{ steps.version.outputs.version }}.zip`, unzip, open `chrome://extensions/` (or `edge://extensions/`), enable Developer mode, click "Load unpacked", and select the folder.
-
-            **Firefox (temporary)**: download the `.zip`, unzip, open `about:debugging#/runtime/this-firefox`, click "Load Temporary Add-on", and select `manifest.json`.
-
-            **Firefox (permanent)**: the `.xpi` file is the same content, renamed. Sign it via Mozilla (developer account, unlisted mode) or install it in Firefox Developer Edition with `xpinstall.signatures.required = false`.
-
-            See the [README](https://github.com/${{ github.repository }}/blob/main/README.md) for details and the security audit.

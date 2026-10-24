@@ -1,0 +1,30 @@
+name: Check
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Shared files identical across variants
+        run: scripts/check-sync.sh
+
+      - name: Manifest versions match
+        run: |
+          C=$(grep -oP '"version":\s*"\K[^"]+' chromium/manifest.json)
+          F=$(grep -oP '"version":\s*"\K[^"]+' firefox/manifest.json)
+          echo "chromium=$C firefox=$F"
+          [ "$C" = "$F" ] || { echo "::error::manifest versions differ"; exit 1; }
+
+      - name: Tag matches manifest version
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: |
+          V=$(grep -oP '"version":\s*"\K[^"]+' chromium/manifest.json)
+          [ "v$V" = "${GITHUB_REF_NAME}" ] || { echo "::error::tag ${GITHUB_REF_NAME} != manifest v$V"; exit 1; }
+
+      - name: Syntax check
+        run: for f in chromium/*.js; do node --check "$f"; done

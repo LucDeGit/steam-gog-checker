@@ -2,8 +2,6 @@
 
 Browser extension that displays a banner above the purchase area on a Steam game page when that game is also available on GOG.com — with the current GOG price and a direct link.
 
-![screenshot placeholder](docs/screenshot.png)
-
 ## Install
 
 **Easiest**: grab the latest version from the [Releases](../../releases) page for your browser:
@@ -19,7 +17,7 @@ Per-variant notes:
 - [`chromium/`](./chromium/) — Chrome / Edge / Brave (Manifest V3, service worker)
 - [`firefox/`](./firefox/) — Firefox 113+ (Manifest V3, event page)
 
-The functional code is identical between variants; only `manifest.json` differs.
+The functional code is identical between variants; only `manifest.json` differs. Edit files in `chromium/`, then run `scripts/check-sync.sh --fix` to copy them to `firefox/` (CI fails if the copies drift).
 
 ## Build locally
 
